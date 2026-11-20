@@ -59,7 +59,7 @@ public class MainActivity extends Activity {
     private static final class PrismView extends View {
         private static final int SIZE = 8;
         private static final int TYPES = 6;
-        private static final int HOME = 0, PLAYING = 1, RESULT = 2, PAUSED = 3, SETTINGS = 4;
+        private static final int HOME = 0, PLAYING = 1, RESULT = 2, PAUSED = 3, SETTINGS = 4, PRIVACY = 5;
         private static final int NONE = 0, ROCKET_H = 1, ROCKET_V = 2, NOVA = 3, PRISM = 4, CROSS = 5;
 
         private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -73,8 +73,8 @@ public class MainActivity extends Activity {
         private final int[][] ice = new int[SIZE][SIZE];
         private final ArrayList<Particle> particles = new ArrayList<>();
         private final RectF pauseRect = new RectF();
-        private final RectF[] boosterRects = {new RectF(), new RectF(), new RectF(), new RectF()};
-        private final int[] boosterCounts = {3, 2, 2, 2};
+        private final RectF[] boosterRects = {new RectF(), new RectF(), new RectF(), new RectF(), new RectF(), new RectF()};
+        private final int[] boosterCounts = {3, 2, 2, 2, 1, 1};
         private final int[] gemColors = {
                 Color.rgb(255, 83, 117), Color.rgb(255, 181, 62),
                 Color.rgb(80, 224, 158), Color.rgb(56, 200, 229),
@@ -110,6 +110,8 @@ public class MainActivity extends Activity {
         private long lastActionAt = 0L;
         private long lastFrameAt = 0L;
         private long lastHintCheck = 0L;
+        private float touchDownX, touchDownY;
+        private SwapFx swapFx;
         private float width, height, scale, boardX, boardY, boardSize, cell, sideX, sideW;
         private boolean wideLayout;
         private RectF playRect = new RectF();
@@ -153,7 +155,8 @@ public class MainActivity extends Activity {
             activeBooster = -1;
             hintAX = hintAY = hintBX = hintBY = -1;
             particles.clear();
-            for (int i = 0; i < boosterCounts.length; i++) boosterCounts[i] = i == 0 ? 3 : 2;
+            int[] startingBoosters = {3, 2, 2, 2, 1, 1};
+            System.arraycopy(startingBoosters, 0, boosterCounts, 0, boosterCounts.length);
             for (int y = 0; y < SIZE; y++) {
                 for (int x = 0; x < SIZE; x++) {
                     specials[y][x] = NONE;
@@ -207,9 +210,10 @@ public class MainActivity extends Activity {
             else if (screen == RESULT) drawResult(canvas);
             else if (screen == PAUSED) drawPause(canvas);
             else if (screen == SETTINGS) drawSettings(canvas);
+            else if (screen == PRIVACY) drawPrivacy(canvas);
             drawParticles(canvas);
             canvas.restore();
-            if (!particles.isEmpty() || screen == PLAYING) postInvalidateDelayed(16);
+            if (!particles.isEmpty() || screen == PLAYING || swapFx != null) postInvalidateDelayed(16);
         }
 
         private void drawBackground(Canvas c) {
@@ -366,7 +370,8 @@ public class MainActivity extends Activity {
                     float b = boardY + (y + 1) * cell - 2;
                     rounded(c, l, t, r, b, Math.max(5, cell * 0.16f),
                             ((x + y) & 1) == 0 ? Color.rgb(49, 43, 103) : Color.rgb(43, 39, 94));
-                    if (tiles[y][x] >= 0) drawGem(c, boardX + (x + 0.5f) * cell, boardY + (y + 0.5f) * cell, cell * 0.36f, tiles[y][x], specials[y][x]);
+                    boolean swapCell = swapFx != null && swapFx.isCell(x, y);
+                    if (tiles[y][x] >= 0 && !swapCell) drawGem(c, boardX + (x + 0.5f) * cell, boardY + (y + 0.5f) * cell, cell * 0.36f, tiles[y][x], specials[y][x]);
                     if (ice[y][x] > 0) drawIce(c, boardX + (x + 0.5f) * cell, boardY + (y + 0.5f) * cell, cell * 0.45f);
                     if (selectedX == x && selectedY == y) {
                         paint.setStyle(Paint.Style.STROKE);
@@ -384,9 +389,27 @@ public class MainActivity extends Activity {
                     }
                 }
             }
+            drawSwapAnimation(c);
             if (iceRemaining > 0) {
                 text(c, "FROST " + iceRemaining, boardX + boardSize - 6, boardY + boardSize + 22, 10, Color.rgb(187, 231, 255), true, Paint.Align.RIGHT);
             }
+        }
+
+        private void drawSwapAnimation(Canvas c) {
+            if (swapFx == null) return;
+            float p = Math.min(1f, (SystemClock.uptimeMillis() - swapFx.startedAt) / 190f);
+            if (p >= 1f) { swapFx = null; return; }
+            float eased = 1f - (1f - p) * (1f - p);
+            float ax = boardX + (swapFx.ax + 0.5f) * cell;
+            float ay = boardY + (swapFx.ay + 0.5f) * cell;
+            float bx = boardX + (swapFx.bx + 0.5f) * cell;
+            float by = boardY + (swapFx.by + 0.5f) * cell;
+            float firstX = ax + (bx - ax) * eased;
+            float firstY = ay + (by - ay) * eased;
+            float secondX = bx + (ax - bx) * eased;
+            float secondY = by + (ay - by) * eased;
+            drawGem(c, firstX, firstY, cell * 0.36f, swapFx.firstGem, swapFx.firstSpecial);
+            drawGem(c, secondX, secondY, cell * 0.36f, swapFx.secondGem, swapFx.secondSpecial);
         }
 
         private void drawGem(Canvas c, float cx, float cy, float r, int type, int special) {
@@ -485,39 +508,46 @@ public class MainActivity extends Activity {
         }
 
         private void drawBoosters(Canvas c) {
-            String[] labels = {"HAMMER", "PRISM", "MIX", "+5"};
-            int[] colors = {Color.rgb(255, 122, 142), Color.rgb(164, 117, 255), Color.rgb(77, 202, 215), Color.rgb(255, 191, 81)};
+            String[] labels = {"HAMMER", "PRISM", "MIX", "+5", "ROW", "COLUMN"};
+            int[] colors = {
+                    Color.rgb(255, 122, 142), Color.rgb(164, 117, 255),
+                    Color.rgb(77, 202, 215), Color.rgb(255, 191, 81),
+                    Color.rgb(88, 190, 255), Color.rgb(104, 220, 170)
+            };
             if (wideLayout) {
                 text(c, "POWER UPS", sideX, 184, 12, Color.rgb(198, 188, 244), true, Paint.Align.LEFT);
                 float bw = Math.min(135, sideW - 8);
-                float bh = 61;
-                for (int i = 0; i < 4; i++) {
+                float bh = 51;
+                for (int i = 0; i < 6; i++) {
                     float x = sideX + (sideW - bw) / 2;
-                    float y = 199 + i * 72;
+                    float y = 198 + i * 58;
                     boosterRects[i].set(x, y, x + bw, y + bh);
                     drawBoosterButton(c, boosterRects[i], i, labels[i], colors[i]);
                 }
-                text(c, activeBooster >= 0 ? "TAP A GEM TO USE" : "MATCH 3 OR MORE", sideX + sideW / 2, 510, 10, Color.rgb(202, 196, 232), true, Paint.Align.CENTER);
+                text(c, activeBooster >= 0 ? "TAP A GEM TO USE" : "SWIPE OR TAP TO MATCH", sideX + sideW / 2, 565, 9, Color.rgb(202, 196, 232), true, Paint.Align.CENTER);
             } else {
                 text(c, "POWER UPS", 20, height - 157, 11, Color.rgb(200, 191, 238), true, Paint.Align.LEFT);
-                float gap = 8;
-                float bw = (width - 40 - gap * 3) / 4f;
-                float bh = 76;
-                float y = height - 145;
-                for (int i = 0; i < 4; i++) {
-                    float x = 20 + i * (bw + gap);
+                float gap = 7;
+                float bw = (width - 40 - gap * 2) / 3f;
+                float bh = 48;
+                float startY = height - 150;
+                for (int i = 0; i < 6; i++) {
+                    int col = i % 3;
+                    int row = i / 3;
+                    float x = 20 + col * (bw + gap);
+                    float y = startY + row * 54;
                     boosterRects[i].set(x, y, x + bw, y + bh);
                     drawBoosterButton(c, boosterRects[i], i, labels[i], colors[i]);
                 }
-                text(c, activeBooster >= 0 ? "CHOOSE A GEM ON THE BOARD" : "MATCH • CASCADE • CELEBRATE", width / 2, height - 42, 10, Color.rgb(199, 192, 231), true, Paint.Align.CENTER);
+                text(c, activeBooster >= 0 ? "CHOOSE A GEM ON THE BOARD" : "SWIPE • MATCH • CASCADE", width / 2, height - 12, 9, Color.rgb(199, 192, 231), true, Paint.Align.CENTER);
             }
         }
 
         private void drawBoosterButton(Canvas c, RectF r, int index, String label, int color) {
             int bg = activeBooster == index ? Color.rgb(255, 235, 174) : Color.argb(220, 255, 255, 255);
             rounded(c, r.left, r.top + 3, r.right, r.bottom, 15, bg);
-            drawBoosterIcon(c, r.centerX(), r.top + (wideLayout ? 22 : 25), Math.min(16, r.width() * .19f), index, color);
-            text(c, label, r.centerX(), r.bottom - 17, wideLayout ? 10 : 9, Color.rgb(72, 53, 119), true, Paint.Align.CENTER);
+            drawBoosterIcon(c, r.centerX(), r.top + (wideLayout ? 18 : 15), Math.min(13, r.width() * .15f), index, color);
+            text(c, label, r.centerX(), r.bottom - 7, wideLayout ? 9 : 8, Color.rgb(72, 53, 119), true, Paint.Align.CENTER);
             paint.setColor(color);
             c.drawCircle(r.right - 7, r.top + 7, 10, paint);
             text(c, String.valueOf(boosterCounts[index]), r.right - 7, r.top + 11, 10, Color.WHITE, true, Paint.Align.CENTER);
@@ -541,8 +571,16 @@ public class MainActivity extends Activity {
                 c.drawLine(x - r, y - r * .6f, x + r, y + r * .6f, paint);
                 c.drawLine(x - r, y + r * .6f, x + r, y - r * .6f, paint);
                 c.drawCircle(x, y, r * .24f, paint);
-            } else {
+            } else if (index == 3) {
                 text(c, "+5", x, y + r * .38f, r * 1.2f, Color.rgb(100, 57, 108), true, Paint.Align.CENTER);
+            } else if (index == 4) {
+                c.drawLine(x - r, y, x + r, y, paint);
+                c.drawLine(x + r * .35f, y - r * .45f, x + r, y, paint);
+                c.drawLine(x + r * .35f, y + r * .45f, x + r, y, paint);
+            } else {
+                c.drawLine(x, y - r, x, y + r, paint);
+                c.drawLine(x - r * .45f, y + r * .35f, x, y + r, paint);
+                c.drawLine(x + r * .45f, y + r * .35f, x, y + r, paint);
             }
         }
 
@@ -601,14 +639,38 @@ public class MainActivity extends Activity {
             drawHome(c);
             paint.setColor(Color.argb(185, 10, 8, 34)); c.drawRect(0, 0, width, height, paint);
             float cx = width / 2, cy = height / 2;
-            rounded(c, cx - 150, cy - 137, cx + 150, cy + 140, 25, Color.rgb(250, 247, 255));
-            text(c, "GAME SETTINGS", cx, cy - 87, 22, Color.rgb(77, 47, 135), true, Paint.Align.CENTER);
-            RectF musicR = new RectF(cx - 112, cy - 48, cx + 112, cy + 8);
-            RectF soundR = new RectF(cx - 112, cy + 22, cx + 112, cy + 78);
+            rounded(c, cx - 150, cy - 145, cx + 150, cy + 145, 25, Color.rgb(250, 247, 255));
+            text(c, "GAME SETTINGS", cx, cy - 98, 22, Color.rgb(77, 47, 135), true, Paint.Align.CENTER);
+            RectF musicR = new RectF(cx - 112, cy - 61, cx + 112, cy - 7);
+            RectF soundR = new RectF(cx - 112, cy + 3, cx + 112, cy + 57);
+            RectF privacyR = new RectF(cx - 112, cy + 67, cx + 112, cy + 121);
             button(c, musicR, "MUSIC   " + (musicEnabled ? "ON" : "OFF"), musicEnabled ? Color.rgb(255, 218, 143) : Color.rgb(224, 217, 241), Color.rgb(73, 58, 115), 14);
             button(c, soundR, "SOUND   " + (soundEnabled ? "ON" : "OFF"), soundEnabled ? Color.rgb(255, 218, 143) : Color.rgb(224, 217, 241), Color.rgb(73, 58, 115), 14);
-            text(c, "ALL PROGRESS SAVES ON THIS DEVICE", cx, cy + 111, 9, Color.rgb(139, 123, 166), true, Paint.Align.CENTER);
-            text(c, "CLOSE", cx, cy + 169, 12, Color.WHITE, true, Paint.Align.CENTER);
+            button(c, privacyR, "PRIVACY POLICY", Color.rgb(224, 217, 241), Color.rgb(73, 58, 115), 13);
+            text(c, "CLOSE", cx, cy + 174, 12, Color.WHITE, true, Paint.Align.CENTER);
+        }
+
+        private void drawPrivacy(Canvas c) {
+            drawHome(c);
+            paint.setColor(Color.argb(190, 10, 8, 34)); c.drawRect(0, 0, width, height, paint);
+            float cx = width / 2f, cy = height / 2f;
+            rounded(c, cx - 158, cy - 196, cx + 158, cy + 184, 24, Color.rgb(250, 247, 255));
+            text(c, "PRIVACY POLICY", cx, cy - 151, 20, Color.rgb(77, 47, 135), true, Paint.Align.CENTER);
+            text(c, "PRISM POP IS OFFLINE", cx, cy - 111, 11, Color.rgb(115, 87, 160), true, Paint.Align.CENTER);
+            String[] lines = {
+                    "No account is needed.",
+                    "No ads or analytics are included.",
+                    "No personal data is collected or sent.",
+                    "Your level and score stay in this app",
+                    "on this device. Uninstalling removes",
+                    "the local save. No sensitive permissions",
+                    "or online services are used."
+            };
+            for (int i = 0; i < lines.length; i++)
+                text(c, lines[i], cx, cy - 62 + i * 25, 12, Color.rgb(90, 78, 121), false, Paint.Align.CENTER);
+            text(c, "PRIVACY QUESTIONS", cx, cy + 126, 10, Color.rgb(115, 87, 160), true, Paint.Align.CENTER);
+            text(c, "github.com/souravmahato2011371/Game_Engine", cx, cy + 150, 8, Color.rgb(90, 78, 121), false, Paint.Align.CENTER);
+            text(c, "TAP TO CLOSE", cx, cy + 213, 11, Color.WHITE, true, Paint.Align.CENTER);
         }
 
         private void drawStar(Canvas c, float cx, float cy, float r, int color) {
@@ -708,6 +770,11 @@ public class MainActivity extends Activity {
         private boolean inside(RectF r, float x, float y) { return r.contains(x, y); }
 
         @Override public boolean onTouchEvent(MotionEvent event) {
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                touchDownX = event.getX() / Math.max(0.01f, scale);
+                touchDownY = event.getY() / Math.max(0.01f, scale);
+                return true;
+            }
             if (event.getAction() != MotionEvent.ACTION_UP) return true;
             float x = event.getX() / scale;
             float y = event.getY() / scale;
@@ -722,15 +789,22 @@ public class MainActivity extends Activity {
                 return true;
             }
             if (screen == SETTINGS) {
-                float cx = width / 2f, cy = height / 2f;
-                if (y > cy - 60 && y < cy + 15) {
+                float cy = height / 2f;
+                if (y > cy - 65 && y < cy - 5) {
                     musicEnabled = !musicEnabled;
                     if (musicEnabled) music.start(); else music.stop();
                     save();
-                } else if (y > cy + 15 && y < cy + 95) {
+                } else if (y > cy && y < cy + 62) {
                     soundEnabled = !soundEnabled; save(); playTone(ToneGenerator.TONE_PROP_ACK, 70);
+                } else if (y > cy + 65 && y < cy + 128) {
+                    screen = PRIVACY;
                 } else { screen = HOME; }
                 invalidate(); return true;
+            }
+            if (screen == PRIVACY) {
+                screen = SETTINGS;
+                invalidate();
+                return true;
             }
             if (screen == RESULT) {
                 if (inside(resultRect, x, y)) {
@@ -762,7 +836,29 @@ public class MainActivity extends Activity {
             }
             int gx = (int)((x - boardX) / cell);
             int gy = (int)((y - boardY) / cell);
-            if (gx >= 0 && gx < SIZE && gy >= 0 && gy < SIZE && x >= boardX && y >= boardY && x < boardX + boardSize && y < boardY + boardSize) {
+            boolean inBoard = gx >= 0 && gx < SIZE && gy >= 0 && gy < SIZE
+                    && x >= boardX && y >= boardY && x < boardX + boardSize && y < boardY + boardSize;
+            if (inBoard && activeBooster < 0) {
+                float dx = x - touchDownX;
+                float dy = y - touchDownY;
+                int startX = (int)((touchDownX - boardX) / cell);
+                int startY = (int)((touchDownY - boardY) / cell);
+                if (startX >= 0 && startX < SIZE && startY >= 0 && startY < SIZE
+                        && (Math.abs(dx) > cell * 0.18f || Math.abs(dy) > cell * 0.18f)) {
+                    int targetX = startX;
+                    int targetY = startY;
+                    if (Math.abs(dx) > Math.abs(dy)) targetX += dx > 0 ? 1 : -1;
+                    else targetY += dy > 0 ? 1 : -1;
+                    if (targetX >= 0 && targetX < SIZE && targetY >= 0 && targetY < SIZE
+                            && Math.abs(targetX - startX) + Math.abs(targetY - startY) == 1) {
+                        performSwap(startX, startY, targetX, targetY);
+                        selectedX = selectedY = -1;
+                        invalidate();
+                        return true;
+                    }
+                }
+            }
+            if (inBoard) {
                 if (activeBooster >= 0) useBooster(gx, gy);
                 else handleTileTap(gx, gy);
                 invalidate();
@@ -774,6 +870,7 @@ public class MainActivity extends Activity {
         }
 
         private void activateBooster(int index) {
+            if (index < 0 || index >= boosterCounts.length) return;
             if (boosterCounts[index] <= 0) {
                 announce("No charges left for that power up.");
                 playTone(ToneGenerator.TONE_PROP_NACK, 80);
@@ -794,25 +891,46 @@ public class MainActivity extends Activity {
             } else {
                 activeBooster = (activeBooster == index) ? -1 : index;
                 selectedX = selectedY = -1;
-                announce(index == 0 ? "Hammer selected. Tap a gem to clear it." : "Prism selected. Tap a gem colour to clear.");
+                String[] instructions = {
+                        "Hammer selected. Tap one gem to smash it.",
+                        "Prism selected. Tap a gem colour to sweep.",
+                        "Mix the board.",
+                        "Add five moves.",
+                        "Row blast selected. Tap a row target.",
+                        "Column blast selected. Tap a column target."
+                };
+                announce(instructions[index]);
             }
             lastActionAt = SystemClock.uptimeMillis();
         }
 
         private void useBooster(int x, int y) {
-            if (activeBooster < 0 || boosterCounts[activeBooster] <= 0) return;
-            if (activeBooster == 0) {
-                boosterCounts[0]--;
+            if (activeBooster < 0 || activeBooster >= boosterCounts.length || boosterCounts[activeBooster] <= 0) return;
+            int used = activeBooster;
+            boosterCounts[used]--;
+            if (used == 0) {
                 clearSingleAndResolve(x, y, false);
                 announce("Hammer smash!");
                 playTone(ToneGenerator.TONE_PROP_NACK, 100);
-            } else if (activeBooster == 1) {
-                boosterCounts[1]--;
+            } else if (used == 1) {
                 int type = tiles[y][x];
                 boolean[][] clear = new boolean[SIZE][SIZE];
-                for (int yy = 0; yy < SIZE; yy++) for (int xx = 0; xx < SIZE; xx++) if (tiles[yy][xx] == type) clear[yy][xx] = true;
+                for (int yy = 0; yy < SIZE; yy++) for (int xx = 0; xx < SIZE; xx++)
+                    if (tiles[yy][xx] == type) clear[yy][xx] = true;
                 resolveFromClear(clear, -1);
                 announce("Prism sweep!");
+                playTone(ToneGenerator.TONE_PROP_ACK, 140);
+            } else if (used == 4) {
+                boolean[][] clear = new boolean[SIZE][SIZE];
+                for (int xx = 0; xx < SIZE; xx++) clear[y][xx] = true;
+                resolveFromClear(clear, -1);
+                announce("Row blast!");
+                playTone(ToneGenerator.TONE_PROP_ACK, 140);
+            } else if (used == 5) {
+                boolean[][] clear = new boolean[SIZE][SIZE];
+                for (int yy = 0; yy < SIZE; yy++) clear[yy][x] = true;
+                resolveFromClear(clear, -1);
+                announce("Column blast!");
                 playTone(ToneGenerator.TONE_PROP_ACK, 140);
             }
             activeBooster = -1;
@@ -862,16 +980,10 @@ public class MainActivity extends Activity {
                 return;
             }
             moves--;
+            swapFx = new SwapFx(ax, ay, bx, by, a, b, sa, sb, SystemClock.uptimeMillis());
             hintAX = hintAY = hintBX = hintBY = -1;
             if (powerCombo) {
-                boolean[][] first = new boolean[SIZE][SIZE];
-                if (sa != NONE && sb != NONE) {
-                    for (int yy = 0; yy < SIZE; yy++) for (int xx = 0; xx < SIZE; xx++) first[yy][xx] = true;
-                } else {
-                    first[ay][ax] = true; first[by][bx] = true;
-                    if (sa != NONE) expandSpecial(first, bx, by, b);
-                    if (sb != NONE) expandSpecial(first, ax, ay, a);
-                }
+                boolean[][] first = buildSpecialCombo(ax, ay, bx, by, a, b, sa, sb);
                 resolveFromClear(first, -1);
             } else {
                 resolveMatches(info, b);
@@ -879,6 +991,52 @@ public class MainActivity extends Activity {
             playTone(ToneGenerator.TONE_PROP_ACK, 100);
             lastActionAt = SystemClock.uptimeMillis();
             checkLevelState();
+        }
+
+        private boolean[][] buildSpecialCombo(int ax, int ay, int bx, int by, int a, int b, int sa, int sb) {
+            boolean[][] clear = new boolean[SIZE][SIZE];
+            if (sa == PRISM && sb == PRISM) {
+                for (int y = 0; y < SIZE; y++) for (int x = 0; x < SIZE; x++) clear[y][x] = true;
+                return clear;
+            }
+            if (sa == PRISM || sb == PRISM) {
+                int targetColor = sa == PRISM ? b : a;
+                int pairedPower = sa == PRISM ? sb : sa;
+                for (int y = 0; y < SIZE; y++) {
+                    for (int x = 0; x < SIZE; x++) {
+                        if (tiles[y][x] != targetColor) continue;
+                        if (pairedPower == ROCKET_H) {
+                            for (int xx = 0; xx < SIZE; xx++) clear[y][xx] = true;
+                        } else if (pairedPower == ROCKET_V) {
+                            for (int yy = 0; yy < SIZE; yy++) clear[yy][x] = true;
+                        } else if (pairedPower == NOVA) {
+                            for (int yy = Math.max(0, y - 1); yy <= Math.min(SIZE - 1, y + 1); yy++)
+                                for (int xx = Math.max(0, x - 1); xx <= Math.min(SIZE - 1, x + 1); xx++) clear[yy][xx] = true;
+                        } else {
+                            clear[y][x] = true;
+                        }
+                        if (specials[y][x] != NONE) expandSpecial(clear, x, y, targetColor);
+                    }
+                }
+                return clear;
+            }
+            boolean horizontal = sa == ROCKET_H || sb == ROCKET_H || sa == CROSS || sb == CROSS;
+            boolean vertical = sa == ROCKET_V || sb == ROCKET_V || sa == CROSS || sb == CROSS;
+            boolean nova = sa == NOVA || sb == NOVA;
+            if (horizontal) {
+                for (int x = 0; x < SIZE; x++) { clear[ay][x] = true; clear[by][x] = true; }
+            }
+            if (vertical) {
+                for (int y = 0; y < SIZE; y++) { clear[y][ax] = true; clear[y][bx] = true; }
+            }
+            if (nova || (!horizontal && !vertical)) {
+                for (int cy : new int[]{ay, by}) for (int cx : new int[]{ax, bx})
+                    for (int y = Math.max(0, cy - 1); y <= Math.min(SIZE - 1, cy + 1); y++)
+                        for (int x = Math.max(0, cx - 1); x <= Math.min(SIZE - 1, cx + 1); x++) clear[y][x] = true;
+            }
+            clear[ay][ax] = true;
+            clear[by][bx] = true;
+            return clear;
         }
 
         private void swap(int ax, int ay, int bx, int by) {
@@ -1132,6 +1290,21 @@ public class MainActivity extends Activity {
                     swap(x, y, x, y + 1);
                     if (ok) { hintAX = x; hintAY = y; hintBX = x; hintBY = y + 1; return; }
                 }
+            }
+        }
+
+        private static final class SwapFx {
+            final int ax, ay, bx, by, firstGem, secondGem, firstSpecial, secondSpecial;
+            final long startedAt;
+            SwapFx(int ax, int ay, int bx, int by, int firstGem, int secondGem,
+                   int firstSpecial, int secondSpecial, long startedAt) {
+                this.ax = ax; this.ay = ay; this.bx = bx; this.by = by;
+                this.firstGem = firstGem; this.secondGem = secondGem;
+                this.firstSpecial = firstSpecial; this.secondSpecial = secondSpecial;
+                this.startedAt = startedAt;
+            }
+            boolean isCell(int x, int y) {
+                return (x == ax && y == ay) || (x == bx && y == by);
             }
         }
 
