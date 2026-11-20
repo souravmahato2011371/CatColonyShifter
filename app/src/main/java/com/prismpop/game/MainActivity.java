@@ -250,7 +250,7 @@ public class MainActivity extends Activity {
             text(c, "five-minute adventure.", cx, top + 270, 25, Color.WHITE, true, Paint.Align.CENTER);
             float cardY = top + 310;
             rounded(c, cx - 142, cardY, cx + 142, cardY + 80, 22, Color.argb(210, 255, 255, 255));
-            text(c, "WORLD  " + String.format("%02d", level), cx - 105, cardY + 31, 12, Color.rgb(98, 86, 145), true, Paint.Align.LEFT);
+            text(c, "WORLD  " + String.format(java.util.Locale.ROOT, "%02d", level), cx - 105, cardY + 31, 12, Color.rgb(98, 86, 145), true, Paint.Align.LEFT);
             text(c, "BEST " + compact(bestScore), cx - 105, cardY + 56, 17, Color.rgb(36, 28, 79), true, Paint.Align.LEFT);
             drawMiniGem(c, cx + 92, cardY + 40, 18, 3);
             float bw = 264;
@@ -769,6 +769,11 @@ public class MainActivity extends Activity {
 
         private boolean inside(RectF r, float x, float y) { return r.contains(x, y); }
 
+        @Override public boolean performClick() {
+            super.performClick();
+            return true;
+        }
+
         @Override public boolean onTouchEvent(MotionEvent event) {
             if (event.getAction() == MotionEvent.ACTION_DOWN) {
                 touchDownX = event.getX() / Math.max(0.01f, scale);
@@ -776,6 +781,7 @@ public class MainActivity extends Activity {
                 return true;
             }
             if (event.getAction() != MotionEvent.ACTION_UP) return true;
+            performClick();
             float x = event.getX() / scale;
             float y = event.getY() / scale;
             if (screen == HOME) {
