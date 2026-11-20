@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: Existing GitHub Release tag to receive PrismPop.apk (for example, PrismPop)
+        description: Release tag to create or update (for example, PrismPop)
         required: true
         type: string
       source_ref:
@@ -52,7 +52,7 @@ jobs:
           echo "release_tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
           echo "Building source: $SOURCE_REF"
           if [[ -n "$RELEASE_TAG" ]]; then
-            echo "Target GitHub Release: $RELEASE_TAG"
+            echo "Release target: $RELEASE_TAG"
           else
             echo "Main-branch build only; no public release upload."
           fi
@@ -85,7 +85,6 @@ jobs:
           yes | sdkmanager --licenses >/dev/null || true
 
       - name: Run release lint
-        id: lint
         continue-on-error: true
         run: gradle --no-daemon lintRelease
 
@@ -103,12 +102,21 @@ jobs:
           test -s app/build/outputs/apk/debug/app-debug.apk
           cp app/build/outputs/apk/debug/app-debug.apk PrismPop.apk
 
-      - name: Verify target GitHub Release exists
+      - name: Create GitHub Release if needed
         if: steps.target.outputs.release_tag != ''
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ steps.target.outputs.release_tag }}
-        run: gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null
+          SOURCE_REF: ${{ steps.target.outputs.source_ref }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Updating existing release: $RELEASE_TAG"
+          else
+            echo "Creating release: $RELEASE_TAG"
+            gh release create "$RELEASE_TAG"               --repo "$GITHUB_REPOSITORY"               --title "Prism Pop $RELEASE_TAG"               --notes "Prism Pop Android build. The APK is attached automatically by GitHub Actions."               --target "$SOURCE_REF"
+          fi
 
       - name: Upload APK to GitHub Release
         if: steps.target.outputs.release_tag != ''
