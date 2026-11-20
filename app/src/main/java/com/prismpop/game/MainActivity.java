@@ -1058,11 +1058,7 @@ public class MainActivity extends Activity {
                 if (cascade == 0 && info.intersectionX >= 0) {
                     keepX = info.intersectionX; keepY = info.intersectionY; newSpecial = NOVA;
                 }
-                for (int yy = 0; yy < SIZE; yy++) for (int xx = 0; xx < SIZE; xx++) {
-                    if (clear[yy][xx] && specials[yy][xx] != NONE && !(xx == keepX && yy == keepY)) {
-                        expandSpecial(clear, xx, yy, prismTarget);
-                    }
-                }
+                expandSpecialChain(clear, prismTarget, keepX, keepY);
                 int removed = applyClear(clear, keepX, keepY, newSpecial);
                 if (removed <= 0) break;
                 score += removed * (55 + cascade * 22);
@@ -1079,9 +1075,7 @@ public class MainActivity extends Activity {
             boolean[][] clear = firstClear;
             int cascade = 0;
             while (clear != null && cascade < 14) {
-                for (int yy = 0; yy < SIZE; yy++) for (int xx = 0; xx < SIZE; xx++) {
-                    if (clear[yy][xx] && specials[yy][xx] != NONE) expandSpecial(clear, xx, yy, prismTarget);
-                }
+                expandSpecialChain(clear, prismTarget, -1, -1);
                 int removed = applyClear(clear, -1, -1, NONE);
                 if (removed <= 0) break;
                 score += removed * (58 + cascade * 20);
@@ -1090,12 +1084,27 @@ public class MainActivity extends Activity {
                 MatchInfo next = findMatches();
                 if (!next.any()) break;
                 clear = next.cells;
-                for (int yy = 0; yy < SIZE; yy++) for (int xx = 0; xx < SIZE; xx++) {
-                    if (clear[yy][xx] && specials[yy][xx] != NONE) expandSpecial(clear, xx, yy, -1);
-                }
             }
             if (score > bestScore) { bestScore = score; save(); }
             if (!hasPossibleMove()) shuffleBoard();
+        }
+
+        private void expandSpecialChain(boolean[][] clear, int targetColor, int keepX, int keepY) {
+            boolean[][] triggered = new boolean[SIZE][SIZE];
+            boolean found;
+            do {
+                found = false;
+                for (int y = 0; y < SIZE; y++) {
+                    for (int x = 0; x < SIZE; x++) {
+                        if (clear[y][x] && !triggered[y][x] && specials[y][x] != NONE
+                                && !(x == keepX && y == keepY)) {
+                            triggered[y][x] = true;
+                            expandSpecial(clear, x, y, targetColor);
+                            found = true;
+                        }
+                    }
+                }
+            } while (found);
         }
 
         private int applyClear(boolean[][] clear, int keepX, int keepY, int newSpecial) {
