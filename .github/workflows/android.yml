@@ -23,7 +23,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: prism-pop-android-${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.event.release.tag_name || github.ref }}
+  group: prism-pop-android-${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.event.release.tag_name || 'PrismPop' }}
   cancel-in-progress: false
 
 jobs:
@@ -46,16 +46,12 @@ jobs:
             RELEASE_TAG="${{ github.event.release.tag_name }}"
           else
             SOURCE_REF="$GITHUB_REF"
-            RELEASE_TAG=""
+            RELEASE_TAG="PrismPop"
           fi
           echo "source_ref=$SOURCE_REF" >> "$GITHUB_OUTPUT"
           echo "release_tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
           echo "Building source: $SOURCE_REF"
-          if [[ -n "$RELEASE_TAG" ]]; then
-            echo "Release target: $RELEASE_TAG"
-          else
-            echo "Main-branch build only; no public release upload."
-          fi
+          echo "Release target: $RELEASE_TAG"
 
       - name: Check out source
         uses: actions/checkout@v4
@@ -95,7 +91,6 @@ jobs:
         run: gradle --no-daemon assembleRelease bundleRelease
 
       - name: Prepare public APK
-        if: steps.target.outputs.release_tag != ''
         shell: bash
         run: |
           set -euo pipefail
@@ -103,7 +98,6 @@ jobs:
           cp app/build/outputs/apk/debug/app-debug.apk PrismPop.apk
 
       - name: Create GitHub Release if needed
-        if: steps.target.outputs.release_tag != ''
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ steps.target.outputs.release_tag }}
@@ -115,11 +109,10 @@ jobs:
             echo "Updating existing release: $RELEASE_TAG"
           else
             echo "Creating release: $RELEASE_TAG"
-            gh release create "$RELEASE_TAG"               --repo "$GITHUB_REPOSITORY"               --title "Prism Pop $RELEASE_TAG"               --notes "Prism Pop Android build. The APK is attached automatically by GitHub Actions."               --target "$SOURCE_REF"
+            gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --title "Prism Pop $RELEASE_TAG" --notes "Prism Pop Android build. The APK is attached automatically by GitHub Actions." --target "$SOURCE_REF"
           fi
 
       - name: Upload APK to GitHub Release
-        if: steps.target.outputs.release_tag != ''
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ steps.target.outputs.release_tag }}
@@ -145,7 +138,7 @@ jobs:
             echo "## Prism Pop Android build"
             echo ""
             echo "- Source: `${{ steps.target.outputs.source_ref }}`"
-            echo "- Release target: `${{ steps.target.outputs.release_tag || 'Actions artifact only' }}`"
+            echo "- Release target: `${{ steps.target.outputs.release_tag }}`"
             echo "- Debug APK: installable test build, signed with the default debug key"
             echo "- Release APK: unsigned output, not ready to install or publish"
             echo "- AAB: release bundle; Play Console upload requires a properly signed release"
