@@ -109,6 +109,7 @@ public class MainActivity extends Activity {
         private boolean tutorialPending = false;
         private long lastActionAt = 0L;
         private long lastFrameAt = 0L;
+        private long lastHintCheck = 0L;
         private float width, height, scale, boardX, boardY, boardSize, cell, sideX, sideW;
         private boolean wideLayout;
         private RectF playRect = new RectF();
@@ -280,6 +281,12 @@ public class MainActivity extends Activity {
 
         private void drawGame(Canvas c) {
             computeBoardLayout();
+            long now = SystemClock.uptimeMillis();
+            if (screen == PLAYING && selectedX < 0 && activeBooster < 0
+                    && now - lastActionAt > 6500 && now - lastHintCheck > 2500 && hintAX < 0) {
+                lastHintCheck = now;
+                findHint();
+            }
             drawHeader(c);
             drawBoard(c);
             drawBoosters(c);
@@ -707,7 +714,10 @@ public class MainActivity extends Activity {
             if (screen == HOME) {
                 if (inside(playRect, x, y)) startLevel();
                 else if (inside(settingsRect, x, y)) screen = SETTINGS;
-                else if (y > height * .58f && y < height * .88f) startLevel();
+                else if (y > playRect.bottom + 12 && y < playRect.bottom + 70) {
+                    startLevel();
+                    tutorialPending = true;
+                }
                 invalidate();
                 return true;
             }
@@ -821,7 +831,9 @@ public class MainActivity extends Activity {
 
         private void handleTileTap(int x, int y) {
             if (selectedX < 0) {
-                selectedX = x; selectedY = y; playTone(ToneGenerator.TONE_PROP_BEEP, 45);
+                selectedX = x; selectedY = y;
+                lastActionAt = SystemClock.uptimeMillis();
+                playTone(ToneGenerator.TONE_PROP_BEEP, 45);
                 return;
             }
             if (selectedX == x && selectedY == y) {
@@ -832,6 +844,7 @@ public class MainActivity extends Activity {
                 selectedX = selectedY = -1;
             } else {
                 selectedX = x; selectedY = y;
+                lastActionAt = SystemClock.uptimeMillis();
                 playTone(ToneGenerator.TONE_PROP_BEEP, 45);
             }
         }
@@ -856,8 +869,8 @@ public class MainActivity extends Activity {
                     for (int yy = 0; yy < SIZE; yy++) for (int xx = 0; xx < SIZE; xx++) first[yy][xx] = true;
                 } else {
                     first[ay][ax] = true; first[by][bx] = true;
-                    if (sa != NONE) expandSpecial(first, ax, ay, b);
-                    if (sb != NONE) expandSpecial(first, bx, by, a);
+                    if (sa != NONE) expandSpecial(first, bx, by, b);
+                    if (sb != NONE) expandSpecial(first, ax, ay, a);
                 }
                 resolveFromClear(first, -1);
             } else {
