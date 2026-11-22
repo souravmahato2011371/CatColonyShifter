@@ -9,7 +9,7 @@ import {createInterface} from "./ui/createInterface.js";
 import {createLiquidGlass} from "./effects/createLiquidGlass.js";
 const mount=document.getElementById("game");let started=false,glass;
 const ui=createInterface({start(){started=true;ui.hideIntro();ui.toast("Welcome home, little Shifter.");},toggleGlass(){return glass.toggle();},build:buildColony});
-const {scene,camera,renderer}=createRenderer(mount,GAME_CONFIG);
+const {scene,camera,renderer,setQualityScale}=createRenderer(mount,GAME_CONFIG);
 const world=createVerdantWorld(THREE,scene),player=createCat(THREE,scene),controls=createControls(renderer.domElement);
 glass=createLiquidGlass(THREE,renderer,scene);
 const prior=loadProgress(GAME_CONFIG.saveKey,world.seeds.length);
