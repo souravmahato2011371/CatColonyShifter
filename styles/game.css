@@ -25,3 +25,27 @@
 @keyframes load{to{transform:translateX(150%)}}@keyframes pulse{50%{opacity:.4;transform:scale(.9)}}
 @media(max-width:760px){.map-panel{top:50%;left:50%;right:auto;bottom:auto;transform:translate(-50%,-50%)}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}}
+
+
+/* Clean touch and focus behaviour: no browser blue flash or long-press selection. */
+html,body,#game,.hud,.panel,.overlay,.mobile-controls,.toast{
+ -webkit-tap-highlight-color:transparent;
+}
+body,button,.chip,.brand,.quest,.panel,.modal,.mobile-controls{
+ -webkit-user-select:none;
+ user-select:none;
+}
+button,a,[role="button"],canvas{
+ -webkit-tap-highlight-color:transparent;
+ -webkit-touch-callout:none;
+}
+button:focus{outline:none}
+button:focus-visible{
+ outline:2px solid var(--lime);
+ outline-offset:3px;
+ box-shadow:0 0 0 3px rgba(217,243,107,.16);
+}
+button:active{
+ filter:brightness(.96);
+}
+::selection{background:rgba(217,243,107,.28);color:var(--cream)}
