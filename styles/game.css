@@ -49,3 +49,6 @@ button:active{
  filter:brightness(.96);
 }
 ::selection{background:rgba(217,243,107,.28);color:var(--cream)}
+
+/* Hidden state is authoritative even if other panel styles are cached or reordered. */
+#panel[hidden],#mapPanel[hidden]{display:none!important}
