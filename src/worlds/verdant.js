@@ -20,8 +20,8 @@ export function createVerdantWorld(THREE,scene){
  const hub=new THREE.Group();group.add(hub);
  const plinth=new THREE.Mesh(new THREE.CylinderGeometry(2.1,2.4,.45,9),mat("#c2a77a"));plinth.position.y=.22;plinth.castShadow=true;hub.add(plinth);
  const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.45,.65,3.6,7),bark);trunk.position.y=2;trunk.castShadow=true;hub.add(trunk);
- const canopy=new THREE.Mesh(new THREE.IcosahedronGeometry(2.35,2),leaf);canopy.position.y=4.2;canopy.castShadow=true;hub.add(canopy);
- const crown=new THREE.Mesh(new THREE.IcosahedronGeometry(1.42,1),leafLight);crown.position.set(-.45,5.05,-.12);hub.add(crown);
+ const canopy=new THREE.Mesh(new THREE.IcosahedronGeometry(1.72,2),leaf);canopy.position.y=3.85;canopy.castShadow=true;hub.add(canopy);
+ const crown=new THREE.Mesh(new THREE.IcosahedronGeometry(1.08,1),leafLight);crown.position.set(-.34,4.48,-.10);hub.add(crown);
  const glow=new THREE.PointLight("#d9f36b",2.2,12);glow.position.set(0,4.7,0);scene.add(glow);
  const gate=new THREE.Group();gate.position.set(0,0,-10.5);group.add(gate);
  const base=new THREE.Mesh(new THREE.BoxGeometry(4.1,.5,.8),stone);base.position.y=.25;gate.add(base);
