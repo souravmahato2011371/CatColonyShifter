@@ -1,9 +1,11 @@
 export function createInterface(actions){
  const $=id=>document.getElementById(id),panel=$("panel"),map=$("mapPanel");let timer=0;
+ panel.hidden=true;map.hidden=true;setPanel(panel,false);setPanel(map,false);
+ const setPanel=(node,open)=>{node.hidden=!open;node.classList.toggle("open",open);};
  $("start").onclick=()=>actions.start();$("continue").onclick=()=>actions.start();
- $("campBtn").onclick=()=>{panel.classList.toggle("open");map.classList.remove("open");};
+ $("campBtn").onclick=()=>{setPanel(panel,!panel.hidden);setPanel(map,false);};
  $("closePanel").onclick=()=>panel.classList.remove("open");
- $("mapBtn").onclick=()=>{map.classList.toggle("open");panel.classList.remove("open");};
+ $("mapBtn").onclick=()=>{setPanel(map,!map.hidden);setPanel(panel,false);};
  $("closeMap").onclick=()=>map.classList.remove("open");
  $("glassBtn").onclick=e=>{const on=actions.toggleGlass();e.currentTarget.textContent=on?"GLASS ON":"GLASS OFF";e.currentTarget.setAttribute("aria-pressed",String(on));};
  document.querySelectorAll("[data-build]").forEach(b=>b.onclick=()=>actions.build(b.dataset.build));
