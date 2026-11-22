@@ -1,28 +1,55 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="theme-color" content="#142b35"><meta name="description" content="Cat Colony: Shifter — explore strange worlds, gather starlight and build a home among the stars.">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#142b35">
+<meta name="description" content="Explore strange worlds, gather starlight and build a home among the stars in Cat Colony: Shifter.">
 <title>Cat Colony: Shifter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./styles/game.css">
-
 </head>
 <body>
-<div id="game"></div>
-<div class="hud">
+<div id="game" aria-label="Cat Colony game world"></div>
+<div class="loading" id="loading"><div class="loading-mark">✦</div><div class="loading-title">WAKING VERDANT</div><div class="loading-track"><i></i></div><p>Growing a little world for you…</p></div>
+<header class="hud">
  <div class="top">
   <div class="brand"><div class="sigil">✦</div><div><strong>CAT COLONY</strong><small>SHIFTER · FIELD LOG 01</small></div></div>
-  <div class="stats"><div class="chip">WORLD <b>01 / VERDANT</b></div><div class="chip">✧ <b id="count">0</b> / 8 STARSEEDS</div><div class="chip">COLONY <b id="colony">1</b></div></div>
+  <div class="stats">
+   <div class="chip">WORLD <b>01 / VERDANT</b></div>
+   <div class="chip">STARSEEDS <b>✧ <i id="count">0</i> · <i id="found">0</i>/8 FOUND</b></div>
+   <div class="chip">COLONY <b id="colony">01</b></div>
+  </div>
  </div>
  <div class="bottom">
-  <div class="quest"><div class="eyebrow">CURRENT OBJECTIVE</div><h3 id="questTitle">A little light goes a long way</h3><p id="questText">Find the eight scattered starseeds. The old gate is waiting.</p><div class="progress"><i id="bar"></i></div></div>
-  <div class="actions"><button class="action secondary" id="mapBtn">WORLD MAP</button><button class="action" id="campBtn">✦ COLONY</button></div>
+  <section class="quest"><div class="eyebrow">CURRENT OBJECTIVE</div><h3 id="questTitle">A little light goes a long way</h3><p id="questText">Find the eight scattered starseeds. The old gate is waiting.</p><div class="progress"><i id="bar"></i></div></section>
+  <nav class="actions" aria-label="Game actions">
+   <button class="action secondary" id="mapBtn">WORLD MAP</button>
+   <button class="action" id="campBtn">✦ COLONY</button>
+   <button class="action secondary" id="glassBtn" aria-pressed="true">GLASS ON</button>
+  </nav>
  </div>
+</header>
+<div class="mobile-controls" id="mobileControls">
+ <div class="pad"><button data-move="forward" aria-label="Forward">▲</button><button data-move="left" aria-label="Left">◀</button><button data-move="back" aria-label="Back">▼</button><button data-move="right" aria-label="Right">▶</button></div>
+ <button class="jump" data-move="jump">JUMP</button>
 </div>
-<div class="mobile-controls" id="mobileControls"><div class="pad"><button data-move="forward">▲</button><button data-move="left">◀</button><button data-move="back">▼</button><button data-move="right">▶</button></div><button class="jump" data-move="jump">JUMP</button></div>
-<div class="panel" id="panel"><div class="eyebrow">YOUR LITTLE CORNER OF THE COSMOS</div><h2>Verdant Haven</h2><p>A home for curious paws. Gather starseeds to restore the colony and invite new friends.</p><div class="buildrow"><span>Starseed garden</span><b>✧ 3</b><button data-build="garden">BUILD · 3</button></div><div class="buildrow"><span>Wayfinder beacon</span><b>✧ 5</b><button data-build="beacon">BUILD · 5</button></div><div class="buildrow"><span>Colony level</span><b id="level">01</b></div><button class="subtle" id="closePanel" style="width:100%;margin-top:12px">CLOSE</button></div>
-<div class="overlay" id="intro"><div class="modal"><div class="eyebrow">A NEW WORLD IS CALLING · AN ORIGINAL COSMIC CAT ADVENTURE</div><h1>Find your<br><span>forever.</span></h1><p>The worlds are drifting apart. As a young Shifter, explore the wilds of Verdant, gather lost starlight and build a home for the ones you meet. Your story begins beneath the old sky-tree.</p><div class="modal-foot"><button class="primary" id="start">ENTER VERDANT →</button><button class="subtle" id="continue">CONTINUE JOURNEY</button></div><div class="help">MOVE · WASD / ARROW KEYS &nbsp; JUMP · SPACE &nbsp; LOOK · DRAG<br>ON TABLET · USE THE DIRECTION PAD · PROGRESS SAVES ON THIS DEVICE</div></div></div>
-<div class="toast" id="toast"></div>
+<div class="panel" id="panel"><div class="eyebrow">YOUR LITTLE CORNER OF THE COSMOS</div><h2>Verdant Haven</h2><p>A home for curious paws. Gather starseeds to restore the colony and invite new friends.</p>
+ <div class="buildrow"><span>Starseed garden</span><b>✧ 3</b><button data-build="garden">BUILD · 3</button></div>
+ <div class="buildrow"><span>Wayfinder beacon</span><b>✧ 5</b><button data-build="beacon">BUILD · 5</button></div>
+ <div class="buildrow"><span>Colony level</span><b id="level">01</b></div>
+ <button class="subtle" id="closePanel">CLOSE</button></div>
+<div class="panel map-panel" id="mapPanel"><div class="eyebrow">KNOWN SPACE</div><h2>The drifting worlds</h2>
+ <div class="map-orbit"><span class="map-world current">01<br><b>VERDANT</b></span><span class="map-world locked">02<br><b>???</b></span><span class="map-world locked">03<br><b>???</b></span></div>
+ <p>Restore Verdant's ancient gate to discover what lies beyond.</p><button class="subtle" id="closeMap">CLOSE</button></div>
+<div class="overlay" id="intro"><div class="modal">
+ <div class="eyebrow">A NEW WORLD IS CALLING · AN ORIGINAL COSMIC CAT ADVENTURE</div><h1>Find your<br><span>forever.</span></h1>
+ <p>The worlds are drifting apart. As a young Shifter, explore the wilds of Verdant, gather lost starlight and build a home for the ones you meet. Your story begins beneath the old sky-tree.</p>
+ <div class="modal-foot"><button class="primary" id="start">ENTER VERDANT →</button><button class="subtle" id="continue">CONTINUE JOURNEY</button></div>
+ <div class="help">MOVE · WASD / ARROW KEYS &nbsp; JUMP · SPACE &nbsp; LOOK · DRAG<br>TABLET · DIRECTION PAD + JUMP · PROGRESS SAVES ON THIS DEVICE</div>
+</div></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script type="module" src="./src/main.js"></script>
-
 </body></html>
