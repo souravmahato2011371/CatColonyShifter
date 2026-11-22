@@ -1,11 +1,8 @@
-name: Deploy CGStore to GitHub Pages
+name: Deploy Cat Colony: Shifter to GitHub Pages
 
 on:
   push:
     branches: [main]
-    paths:
-      - 'docs/**'
-      - '.github/workflows/pages.yml'
   workflow_dispatch:
 
 permissions:
