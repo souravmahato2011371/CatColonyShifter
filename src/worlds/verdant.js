@@ -1,3 +1,4 @@
+import {createVerdantTrees} from "./createTrees.js";
 export function createVerdantWorld(THREE,scene){
  const group=new THREE.Group();scene.add(group);
  const mat=(color,roughness=.86)=>new THREE.MeshStandardMaterial({color,roughness});
@@ -9,14 +10,7 @@ export function createVerdantWorld(THREE,scene){
  [[-3,-3,2.6,1.2],[4,3,2.2,1.5],[-7,2,1.4,2],[7,-3,1.7,1.3]].forEach((p,i)=>{
   const patch=new THREE.Mesh(new THREE.CircleGeometry(1,7),i%2?grassLight:grass);patch.rotation.x=-Math.PI/2;patch.position.set(p[0],.185,p[1]);patch.scale.set(p[2],p[3],1);group.add(patch);
  });
- function tree(x,z,s=1,tint=0){
-  const g=new THREE.Group(),trunk=new THREE.Mesh(new THREE.CylinderGeometry(.17*s,.28*s,1.7*s,6),bark);
-  trunk.position.y=.82*s;trunk.castShadow=true;g.add(trunk);
-  for(let i=0;i<4;i++){const crown=new THREE.Mesh(new THREE.IcosahedronGeometry((.78-i*.09)*s,1),(i+tint)%2?leaf:leafLight);
-   crown.position.set((i%2?.2:-.2)*s,(1.65+i*.31)*s,(i-1.5)*.06*s);crown.castShadow=true;g.add(crown);}
-  g.position.set(x,0,z);group.add(g);
- }
- [[-8,-5,1.25],[-6,5,.95],[-10,1,.85],[7,-6,1.2],[9,2,1.05],[5,7,.9],[0,-9,.9],[-3,8,.8],[10,-2,.65],[-9,-3,.72]].forEach((v,i)=>tree(v[0],v[1],v[2],i%2));
+ const treeSet=createVerdantTrees(group);
  function rock(x,z,s){const o=new THREE.Mesh(new THREE.DodecahedronGeometry(s,0),stone);o.position.set(x,s*.38,z);o.scale.y=.62;o.rotation.set(.2,x*.13,z*.11);o.castShadow=true;group.add(o);}
  [[-5,-2,.65],[5,1,.78],[-8,3,.48],[7,5,.58],[2,-7,.4],[-2,6,.35],[9,-5,.42]].forEach(v=>rock(...v));
  const plantGeo=new THREE.ConeGeometry(.13,.55,5),plantMats=[leaf,leafLight,grassLight];
@@ -49,7 +43,8 @@ export function createVerdantWorld(THREE,scene){
  function update(t,restored){
   gateRing.rotation.z=Math.sin(t*.7)*.035;gateRing.material.color.set(restored?"#e9ef85":"#a4c9a8");portal.material.opacity=restored?.48+Math.sin(t*3)*.12:.12;
   canopy.rotation.y=Math.sin(t*.18)*.04;crown.rotation.y=-t*.08;motes.rotation.y=t*.018;
+  treeSet.update(t);
   seeds.forEach(s=>{if(!s.visible)return;s.rotation.y+=.012;s.position.y=.95+Math.sin(t*2.2+s.userData.id)*.13;s.children[1].rotation.z+=.018;});
  }
- return {group,seeds,gate,update,dispose(){scene.remove(glow,motes);moteGeometry.dispose();}};
+ return {group,seeds,gate,update,dispose(){scene.remove(glow,motes);moteGeometry.dispose();treeSet.dispose();}};
 }

@@ -1,4 +1,4 @@
-import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
+import * as THREE from "three";
 export function createRenderer(mount,config){
  const scene=new THREE.Scene();scene.background=new THREE.Color("#8ac7bd");scene.fog=new THREE.Fog("#8ac7bd",25,66);
  const camera=new THREE.PerspectiveCamera(48,innerWidth/innerHeight,.1,150);camera.position.set(0,8,13);
