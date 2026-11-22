@@ -14,15 +14,16 @@ export function createVerdantTrees(scene){
   const tree=new Tree();
   tree.loadPreset(item.preset);
   tree.options.seed=item.seed;
-  tree.options.leaves.count=Math.min(tree.options.leaves.count,14);
+  tree.options.leaves.count=Math.min(tree.options.leaves.count,10);
   tree.generate();
   tree.position.set(item.x,0,item.z);
   tree.scale.setScalar(item.scale);
-  tree.traverse(node=>{if(node.isMesh){node.castShadow=true;node.receiveShadow=true;}});
+  tree.traverse(node=>{if(node.isMesh){node.castShadow=false;node.receiveShadow=false;}});
   scene.add(tree);trees.push(tree);
  }
+ let lastWindUpdate=0;
  return{
-  update(time){for(const tree of trees)tree.update(time);},
+  update(time){if(time-lastWindUpdate<.09)return;lastWindUpdate=time;for(const tree of trees)tree.update(time);},
   dispose(){for(const tree of trees){tree.traverse(node=>{if(node.isMesh){node.geometry?.dispose();const ms=Array.isArray(node.material)?node.material:[node.material];for(const m of ms)m?.dispose();}});scene.remove(tree);}}
  };
 }
