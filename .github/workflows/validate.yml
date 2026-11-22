@@ -8,12 +8,12 @@ on:
 permissions:
   contents: read
 jobs:
-  syntax:
+  syntax-and-tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Check JavaScript module syntax
-        run: npm run check
+      - name: Check JavaScript syntax and progress tests
+        run: npm run check && npm test
