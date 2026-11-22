@@ -23,7 +23,7 @@ export function createLiquidGlass(THREE,renderer,scene){
  const crystal=new THREE.Mesh(new THREE.SphereGeometry(.72,40,32),material);
  crystal.position.set(0,2.05,-8.78);crystal.scale.set(.88,1.08,.78);crystal.renderOrder=4;scene.add(crystal);
  const light=new THREE.PointLight("#9fffea",.85,4.8);light.position.copy(crystal.position);scene.add(light);
- let enabled=true;const size=new THREE.Vector2();
+ let enabled=false;crystal.visible=false;const size=new THREE.Vector2();
  function resize(){renderer.getDrawingBufferSize(size);target.setSize(Math.max(1,size.x),Math.max(1,size.y));uniforms.uResolution.value.copy(size);}
  resize();addEventListener("resize",resize);
  function render(camera,time){
