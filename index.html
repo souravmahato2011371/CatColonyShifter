@@ -18,7 +18,7 @@
   }
 }
 </script>
-<link rel="stylesheet" href="./styles/game.css">
+<link rel="stylesheet" href="./styles/game.css?v=20261122-3">
 </head>
 <body>
 <div id="game" aria-label="Cat Colony game world"></div>
@@ -45,12 +45,12 @@
  <div class="pad"><button data-move="forward" aria-label="Forward">▲</button><button data-move="left" aria-label="Left">◀</button><button data-move="back" aria-label="Back">▼</button><button data-move="right" aria-label="Right">▶</button></div>
  <button class="jump" data-move="jump">JUMP</button>
 </div>
-<div class="panel" id="panel"><div class="eyebrow">YOUR LITTLE CORNER OF THE COSMOS</div><h2>Verdant Haven</h2><p>A home for curious paws. Gather starseeds to restore the colony and invite new friends.</p>
+<div class="panel" id="panel" hidden><div class="eyebrow">YOUR LITTLE CORNER OF THE COSMOS</div><h2>Verdant Haven</h2><p>A home for curious paws. Gather starseeds to restore the colony and invite new friends.</p>
  <div class="buildrow"><span>Starseed garden</span><b>✧ 3</b><button data-build="garden">BUILD · 3</button></div>
  <div class="buildrow"><span>Wayfinder beacon</span><b>✧ 5</b><button data-build="beacon">BUILD · 5</button></div>
  <div class="buildrow"><span>Colony level</span><b id="level">01</b></div>
  <button class="subtle" id="closePanel">CLOSE</button></div>
-<div class="panel map-panel" id="mapPanel"><div class="eyebrow">KNOWN SPACE</div><h2>The drifting worlds</h2>
+<div class="panel map-panel" id="mapPanel" hidden><div class="eyebrow">KNOWN SPACE</div><h2>The drifting worlds</h2>
  <div class="map-orbit"><span class="map-world current">01<br><b>VERDANT</b></span><span class="map-world locked">02<br><b>???</b></span><span class="map-world locked">03<br><b>???</b></span></div>
  <p>Restore Verdant's ancient gate to discover what lies beyond.</p><button class="subtle" id="closeMap">CLOSE</button></div>
 <div class="overlay" id="intro"><div class="modal">
@@ -74,5 +74,5 @@
  window.__ccsBootError=showBootError;
 })();
 </script>
-<script type="module" src="./src/main.js"></script>
+<script type="module" src="./src/main.js?v=20261122-3"></script>
 </body></html>
