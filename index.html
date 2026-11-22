@@ -60,5 +60,19 @@
  <div class="help">MOVE · WASD / ARROW KEYS &nbsp; JUMP · SPACE &nbsp; LOOK · DRAG<br>TABLET · DIRECTION PAD + JUMP · PROGRESS SAVES ON THIS DEVICE</div>
 </div></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+(function(){
+ function showBootError(message){
+  const loading=document.getElementById("loading");
+  if(!loading)return;
+  loading.classList.remove("done");
+  loading.innerHTML='<div class="loading-mark">!</div><div class="loading-title">THE WORLD DID NOT WAKE</div><p style="max-width:320px;text-align:center;line-height:1.6;padding:0 18px">'+String(message).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))+'</p><button onclick="location.reload()" style="margin-top:14px;padding:11px 18px;border-radius:10px;background:#d9f36b;color:#142b35;font-weight:800">TRY AGAIN</button>';
+  loading.style.background="#142b35";
+ }
+ window.addEventListener("error",e=>showBootError(e.message||"A script or game asset failed to load."));
+ window.addEventListener("unhandledrejection",e=>showBootError(e.reason?.message||String(e.reason||"A game module failed to load.")));
+ window.__ccsBootError=showBootError;
+})();
+</script>
 <script type="module" src="./src/main.js"></script>
 </body></html>

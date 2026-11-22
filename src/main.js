@@ -68,5 +68,5 @@ function frame(){
  world.update(t,state.totalFound>=state.goal);glass.update(t);movePlayer(dt,t);collectSeeds();checkGate();updateCamera(dt);glass.render(camera,t);
 }
 frame();
-addEventListener("load",()=>setTimeout(()=>ui.hideLoading(),180));
+setTimeout(()=>ui.hideLoading(),180);
 addEventListener("beforeunload",()=>{persist();controls.dispose();glass.dispose();world.dispose();});
