@@ -1,13 +1,17 @@
 export function createControls(canvas){
  const keys=Object.create(null),touch=Object.create(null),buttonCleanups=[];
- let jumpQueued=false,dragging=false,lastX=0,yaw=0,activePointer=null;\n const touchQuery=matchMedia("(pointer: coarse)");\n function setInputMode(mode){document.body.classList.toggle("input-touch",mode==="touch");document.body.classList.toggle("input-keyboard-mouse",mode==="keyboard-mouse");}\n setInputMode(touchQuery.matches?"touch":"keyboard-mouse");\n const onTouchMode=()=>{if(touchQuery.matches)setInputMode("touch");};touchQuery.addEventListener?.("change",onTouchMode);
+ let jumpQueued=false,dragging=false,lastX=0,yaw=0,activePointer=null;
+ const touchQuery=matchMedia("(pointer: coarse)");
+ function setInputMode(mode){document.body.classList.toggle("input-touch",mode==="touch");document.body.classList.toggle("input-keyboard-mouse",mode==="keyboard-mouse");}
+ setInputMode(touchQuery.matches?"touch":"keyboard-mouse");
+ const onTouchMode=()=>{if(touchQuery.matches)setInputMode("touch");};touchQuery.addEventListener?.("change",onTouchMode);
  function downKey(e){
   if(e.target instanceof HTMLElement&&e.target.closest("input,textarea,select,[contenteditable=true]"))return;
   const key=e.key.toLowerCase();keys[key]=true;setInputMode("keyboard-mouse");
   if(e.code==="Space"){e.preventDefault();jumpQueued=true;}
   if(["arrowup","arrowdown","arrowleft","arrowright"].includes(key))e.preventDefault();
  }
- function upKey(e){keys[e.key.toLowerCase()]=false;}
+ function upKey(e){keys[e.key.toLowerCase()]=false;}\n function detectPointer(e){setInputMode(e.pointerType==="touch"?"touch":"keyboard-mouse");}\n document.addEventListener("pointerdown",detectPointer,{passive:true});
  addEventListener("keydown",downKey);addEventListener("keyup",upKey);
  document.querySelectorAll("[data-move]").forEach(button=>{
   const key=button.dataset.move;
@@ -31,6 +35,6 @@ export function createControls(canvas){
  return{
   getMove(){const f=keys.w||keys.arrowup||touch.forward,b=keys.s||keys.arrowdown||touch.back,l=keys.a||keys.arrowleft||touch.left,r=keys.d||keys.arrowright||touch.right;let x=(r?1:0)-(l?1:0),z=(b?1:0)-(f?1:0),len=Math.hypot(x,z)||1;return{x:x/len,z:z/len,moving:Boolean(x||z)};},
   consumeJump(){const v=jumpQueued;jumpQueued=false;return v;},get yaw(){return yaw;},
-  dispose(){touchQuery.removeEventListener?.("change",onTouchMode);removeEventListener("keydown",downKey);removeEventListener("keyup",upKey);canvas.removeEventListener("pointerdown",pointerDown);canvas.removeEventListener("pointermove",pointerMove);canvas.removeEventListener("pointerup",pointerUp);canvas.removeEventListener("pointercancel",pointerUp);canvas.removeEventListener("contextmenu",contextMenu);buttonCleanups.forEach(fn=>fn());}
+  dispose(){document.removeEventListener("pointerdown",detectPointer);touchQuery.removeEventListener?.("change",onTouchMode);removeEventListener("keydown",downKey);removeEventListener("keyup",upKey);canvas.removeEventListener("pointerdown",pointerDown);canvas.removeEventListener("pointermove",pointerMove);canvas.removeEventListener("pointerup",pointerUp);canvas.removeEventListener("pointercancel",pointerUp);canvas.removeEventListener("contextmenu",contextMenu);buttonCleanups.forEach(fn=>fn());}
  };
 }
