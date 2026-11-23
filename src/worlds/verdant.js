@@ -1,4 +1,4 @@
-import {createVerdantTrees} from "./createTrees.js";
+import {createVerdantTrees} from "./createTrees.js?v=verdant-oak-01";
 export function createVerdantWorld(THREE,scene){
  const group=new THREE.Group();scene.add(group);
  const mat=(color,roughness=.86)=>new THREE.MeshStandardMaterial({color,roughness});
