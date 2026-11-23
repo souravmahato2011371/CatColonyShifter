@@ -6,12 +6,10 @@ import {createCat} from "./entities/createCat.js";
 import {createControls} from "./game/createControls.js?v=20261123-2";
 import {loadProgress,saveProgress} from "./game/progress.js?v=20261123-2";
 import {createInterface} from "./ui/createInterface.js?v=20261123-2";
-import {createLiquidGlass} from "./effects/createLiquidGlass.js";
-const mount=document.getElementById("game");let started=false,glass;
-const ui=createInterface({start(){started=true;ui.hideIntro();ui.toast("Welcome home, little Shifter.");},toggleGlass(){return glass.toggle();},build:buildColony});
+const mount=document.getElementById("game");let started=false;
+const ui=createInterface({start(){started=true;const root=document.documentElement;if(!document.fullscreenElement&&root.requestFullscreen)root.requestFullscreen().catch(()=>{});ui.hideIntro();ui.toast("Welcome home, little Shifter.");},build:buildColony});
 const {scene,camera,renderer,setQualityScale}=createRenderer(mount,GAME_CONFIG);
 const world=createVerdantWorld(THREE,scene),player=createCat(THREE,scene),controls=createControls(renderer.domElement);
-glass=createLiquidGlass(THREE,renderer,scene);
 const prior=loadProgress(GAME_CONFIG.saveKey,world.seeds.length);
 const state={currency:prior.currency,totalFound:prior.totalFound,foundIds:prior.foundIds.slice(),built:prior.built.slice(),goal:GAME_CONFIG.starseedGoal,worldRestored:false};
 let velocityY=0,grounded=true;const clock=new THREE.Clock(),lookAt=new THREE.Vector3();
@@ -76,9 +74,9 @@ function frame(){
   else if(lastFps>57)quality=Math.min(1,quality+.025);
   setQualityScale(quality);
  }
- world.update(t,state.totalFound>=state.goal);glass.update(t);movePlayer(dt,t);collectSeeds();checkGate();updateCamera(dt);glass.render(camera,t);
+ world.update(t,state.totalFound>=state.goal);movePlayer(dt,t);collectSeeds();checkGate();updateCamera(dt);renderer.render(scene,camera);
 }
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)clock.getDelta();});
 frame();
 setTimeout(()=>ui.hideLoading(),180);
-addEventListener("beforeunload",()=>{persist();controls.dispose();glass.dispose();world.dispose();});
+addEventListener("beforeunload",()=>{persist();controls.dispose();world.dispose();});
