@@ -52,3 +52,8 @@ button:active{
 
 /* Hidden state is authoritative even if other panel styles are cached or reordered. */
 #panel[hidden],#mapPanel[hidden]{display:none!important}
+
+/* Input-mode detection: show touch controls only for touch input. */
+.mobile-controls{display:none}
+.input-touch .mobile-controls{display:flex}
+.input-keyboard-mouse .mobile-controls{display:none}
