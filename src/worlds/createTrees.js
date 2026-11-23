@@ -7,7 +7,9 @@ const placements=[
  {preset:"Ash Medium",seed:4104,x:9,z:2,scale:.09},
  {preset:"Oak Small",seed:4105,x:5,z:7,scale:.115},
  {preset:"Bush 1",seed:4106,x:-10,z:1,scale:.115},
- {preset:"Bush 2",seed:4107,x:-3,z:8,scale:.11}
+ {preset:"Bush 2",seed:4107,x:-3,z:8,scale:.11},
+ // The ancient colony tree uses a full branching oak rather than a sphere canopy.
+ {preset:"Oak Large",seed:4108,x:0,z:0,y:.43,scale:.085,leafCount:28,leafTint:0x75b96b}
 ];
 
 export function createVerdantTrees(scene){
@@ -16,13 +18,12 @@ export function createVerdantTrees(scene){
   const preset=TreePreset[item.preset];
   if(!preset)throw new Error("EZ-Tree preset not found: "+item.preset);
   const tree=new Tree();
-  // Copy preset options first, then generate exactly once with the final seed
-  // and mobile-friendly leaf budget. loadPreset() generates immediately.
   tree.options.copy(preset);
   tree.options.seed=item.seed;
-  tree.options.leaves.count=Math.min(tree.options.leaves.count,10);
+  tree.options.leaves.count=item.leafCount??Math.min(tree.options.leaves.count,16);
+  if(item.leafTint!==undefined)tree.options.leaves.tint=item.leafTint;
   tree.generate();
-  tree.position.set(item.x,0,item.z);
+  tree.position.set(item.x,item.y??0,item.z);
   tree.scale.setScalar(item.scale);
   tree.traverse(node=>{if(node.isMesh){node.castShadow=false;node.receiveShadow=false;}});
   scene.add(tree);
