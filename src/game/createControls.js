@@ -11,7 +11,9 @@ export function createControls(canvas){
   if(e.code==="Space"){e.preventDefault();jumpQueued=true;}
   if(["arrowup","arrowdown","arrowleft","arrowright"].includes(key))e.preventDefault();
  }
- function upKey(e){keys[e.key.toLowerCase()]=false;}\n function detectPointer(e){setInputMode(e.pointerType==="touch"?"touch":"keyboard-mouse");}\n document.addEventListener("pointerdown",detectPointer,{passive:true});
+ function upKey(e){keys[e.key.toLowerCase()]=false;}
+ function detectPointer(e){setInputMode(e.pointerType==="touch"?"touch":"keyboard-mouse");}
+ document.addEventListener("pointerdown",detectPointer,{passive:true});
  addEventListener("keydown",downKey);addEventListener("keyup",upKey);
  document.querySelectorAll("[data-move]").forEach(button=>{
   const key=button.dataset.move;
