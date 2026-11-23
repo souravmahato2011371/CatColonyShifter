@@ -8,7 +8,6 @@ export function createInterface(actions){
  $("closePanel").onclick=()=>setPanel(panel,campButton,false);
  mapButton.onclick=()=>{const open=map.hidden;closeAll();if(open)setPanel(map,mapButton,true);};
  $("closeMap").onclick=()=>setPanel(map,mapButton,false);
- $("glassBtn").onclick=e=>{const on=actions.toggleGlass();e.currentTarget.textContent=on?"GLASS ON":"GLASS OFF";e.currentTarget.setAttribute("aria-pressed",String(on));};
  document.querySelectorAll("[data-build]").forEach(b=>b.onclick=()=>actions.build(b.dataset.build));
  function toast(message){const node=$("toast");node.textContent=message;node.classList.add("show");clearTimeout(timer);timer=setTimeout(()=>node.classList.remove("show"),1900);}
  function update(s){
