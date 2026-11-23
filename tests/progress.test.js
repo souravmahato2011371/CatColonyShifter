@@ -58,3 +58,17 @@ test("saving and loading keeps the full journey", () => {
   saveProgress("ccs-save-v2", state);
   assert.deepEqual(loadProgress("ccs-save-v2", 8), state);
 });
+test("duplicate and invalid save entries are normalized", () => {
+  values.set("ccs-save-v2", JSON.stringify({
+    totalFound: 99,
+    currency: -5,
+    seedIds: [1, 1, 3, -2, 40],
+    built: ["garden", "garden", "spaceship"]
+  }));
+  assert.deepEqual(loadProgress("ccs-save-v2", 8), {
+    foundIds: [1, 3],
+    built: ["garden"],
+    totalFound: 8,
+    currency: 0
+  });
+});
