@@ -5,7 +5,7 @@ import {createVerdantWorld} from "./worlds/verdant.js";
 import {createCat} from "./entities/createCat.js";
 import {createControls} from "./game/createControls.js";
 import {loadProgress,saveProgress} from "./game/progress.js";
-import {createInterface} from "./ui/createInterface.js";
+import {createInterface} from "./ui/createInterface.js?v=20261123-1";
 import {createLiquidGlass} from "./effects/createLiquidGlass.js";
 const mount=document.getElementById("game");let started=false,glass;
 const ui=createInterface({start(){started=true;ui.hideIntro();ui.toast("Welcome home, little Shifter.");},toggleGlass(){return glass.toggle();},build:buildColony});
