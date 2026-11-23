@@ -63,10 +63,22 @@ function checkGate(){
  if(state.totalFound<GAME_CONFIG.starseedGoal||state.worldRestored)return;
  if(player.group.position.distanceTo(world.gate.position)<2.35){state.worldRestored=true;refresh();ui.toast("WORLD RESTORED · VERDANT");ui.closePanels();}
 }
+let quality=1,qualitySampleTime=0,qualityFrames=0,lastFps=60;
 function frame(){
- requestAnimationFrame(frame);const dt=Math.min(clock.getDelta(),.04),t=clock.elapsedTime;
+ requestAnimationFrame(frame);
+ if(document.hidden)return;
+ const dt=Math.min(clock.getDelta(),.04),t=clock.elapsedTime;
+ qualityFrames++;
+ if(t-qualitySampleTime>=1){
+  lastFps=qualityFrames/Math.max(.001,t-qualitySampleTime);qualityFrames=0;qualitySampleTime=t;
+  if(lastFps<43)quality=Math.max(.68,quality-.09);
+  else if(lastFps<50)quality=Math.max(.68,quality-.045);
+  else if(lastFps>57)quality=Math.min(1,quality+.025);
+  setQualityScale(quality);
+ }
  world.update(t,state.totalFound>=state.goal);glass.update(t);movePlayer(dt,t);collectSeeds();checkGate();updateCamera(dt);glass.render(camera,t);
 }
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)clock.getDelta();});
 frame();
 setTimeout(()=>ui.hideLoading(),180);
 addEventListener("beforeunload",()=>{persist();controls.dispose();glass.dispose();world.dispose();});
