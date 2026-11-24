@@ -2,7 +2,7 @@ import * as THREE from "three";
 import {GAME_CONFIG} from "./config.js";
 import {createRenderer} from "./engine/createRenderer.js";
 import {createVerdantWorld} from "./worlds/verdant.js?v=verdant-oak-01";
-import {createCat} from "./entities/createCat.js";
+import {createCat} from "./entities/createCat.js?v=20261124-catglb";
 import {createControls} from "./game/createControls.js?v=20261123-4";
 import {loadProgress,saveProgress} from "./game/progress.js?v=20261123-4";
 import {createInterface} from "./ui/createInterface.js?v=20261123-4";
